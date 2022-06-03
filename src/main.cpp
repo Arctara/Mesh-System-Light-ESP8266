@@ -18,7 +18,9 @@
 int sensorReading;
 String reading, prevReading;
 unsigned long previousMillis = 0;
-const long interval = 10268;
+unsigned long lastScan = 0;
+const long interval = 3102;
+// const long interval = 10268;
 
 WebSocketsClient webSocket;
 
@@ -49,6 +51,17 @@ void setup() {
 
 void loop() {
   unsigned long currentMillis = millis();
+
+  if (currentMillis - lastScan >= 5000) {
+    lastScan = millis();
+
+    if (webSocket.isConnected()) {
+      Serial.println("WebSocket Connected");
+    } else {
+      Serial.println("Connecting (Please Connect)");
+      webSocket.begin("192.168.5.1", 80, "/ws");
+    }
+  }
 
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
@@ -81,6 +94,7 @@ void sendData() {
   data["sensorType"] = sensorType;
   data["to"] = centerName;
   data["data"] = reading;
+  // data["data"] = sensorReading;
   String msg;
   serializeJson(data, msg);
   webSocket.sendTXT(msg);
